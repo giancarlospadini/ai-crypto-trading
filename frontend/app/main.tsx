@@ -49,7 +49,7 @@ interface Trade { id: number; order_id: number; account_id: number; symbol: stri
 
 const PAGE_TITLES: Record<string, string> = {
   portfolio: 'Crypto Paper Trading',
-  comprehensive: 'Open Alpha Arena',
+  comprehensive: 'Auto-trading Tracker',
 }
 
 function App() {
@@ -193,6 +193,16 @@ function App() {
       setAccountsLoading(false)
     }
   }
+
+  // Auto-refresh page every 2 minutes
+  useEffect(() => {
+    const autoRefreshInterval = setInterval(() => {
+      console.log('Auto-refreshing page...')
+      window.location.reload()
+    }, 120000) // 2 minutes = 120,000 milliseconds
+
+    return () => clearInterval(autoRefreshInterval)
+  }, [])
 
   // Fetch accounts on mount and when settings updated
   useEffect(() => {

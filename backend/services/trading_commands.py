@@ -24,7 +24,7 @@ from services.ai_decision_service import (
 
 logger = logging.getLogger(__name__)
 
-AI_TRADING_SYMBOLS: List[str] = ["BTC", "ETH", "SOL", "BNB", "XRP", "DOGE"]
+AI_TRADING_SYMBOLS: List[str] = ["BTC", "ETH", "SOL", "DOGE", "XRP", "BNB", "ADA", "USDC", "PENGU", "PEPE", "XPL", "KAITO", "LTC", "W", "VANA"]
 
 
 def _get_market_prices(symbols: List[str]) -> Dict[str, float]:

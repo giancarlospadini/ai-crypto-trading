@@ -170,6 +170,8 @@ export interface TradingAccountUpdate {
   model?: string
   base_url?: string
   api_key?: string
+  initial_capital?: number
+  custom_instructions?: string
 }
 
 
@@ -248,10 +250,18 @@ export async function updateAccount(accountId: number, account: TradingAccountUp
       name: account.name,
       model: account.model,
       base_url: account.base_url,
-      api_key: account.api_key
+      api_key: account.api_key,
+      initial_capital: account.initial_capital,
+      custom_instructions: account.custom_instructions
     })
   })
   return response.json()
+}
+
+export async function deleteAccount(accountId: number): Promise<void> {
+  await apiRequest(`/account/${accountId}`, {
+    method: 'DELETE',
+  })
 }
 
 export async function testLLMConnection(testData: {
@@ -262,6 +272,30 @@ export async function testLLMConnection(testData: {
   const response = await apiRequest('/account/test-llm', {
     method: 'POST',
     body: JSON.stringify(testData)
+  })
+  return response.json()
+}
+
+// AI Decision Q&A
+export interface AIDecisionQA {
+  id: number
+  decision_id: number
+  question: string
+  answer: string
+  created_at: string
+}
+
+export async function getDecisionQA(decisionId: number): Promise<{ decision_id: number; qa_entries: AIDecisionQA[] }> {
+  const response = await apiRequest(`/decision/${decisionId}/qa`, {
+    method: 'GET'
+  })
+  return response.json()
+}
+
+export async function askDecisionQuestion(decisionId: number, question: string): Promise<AIDecisionQA> {
+  const response = await apiRequest(`/decision/${decisionId}/ask`, {
+    method: 'POST',
+    body: JSON.stringify({ question })
   })
   return response.json()
 }

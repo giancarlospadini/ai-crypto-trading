@@ -4,6 +4,10 @@ import { defineConfig } from "vite"
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    outDir: path.resolve(__dirname, "../backend/static"),
+    emptyOutDir: true,
+  },
   server: {
     port: 5621,
     proxy: {

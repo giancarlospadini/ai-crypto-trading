@@ -48,6 +48,7 @@ async def list_all_accounts(db: Session = Depends(get_db)):
                 "model": account.model,
                 "base_url": account.base_url,
                 "api_key": account.api_key,
+                "custom_instructions": account.custom_instructions,
                 "is_active": account.is_active == "true"
             })
         
@@ -253,7 +254,23 @@ async def update_account_settings(account_id: int, payload: dict, db: Session = 
         if "api_key" in payload:
             account.api_key = payload["api_key"]
             logger.info(f"Updated api_key (length: {len(payload['api_key']) if payload['api_key'] else 0})")
-        
+
+        if "custom_instructions" in payload:
+            account.custom_instructions = payload["custom_instructions"]
+            logger.info(f"Updated custom_instructions (length: {len(payload['custom_instructions']) if payload['custom_instructions'] else 0})")
+
+        # Allow updating initial_capital and current_cash
+        # WARNING: This will reset the account balance. Use with caution.
+        if "initial_capital" in payload:
+            new_capital = float(payload["initial_capital"])
+            if new_capital <= 0:
+                raise HTTPException(status_code=400, detail="Initial capital must be positive")
+            account.initial_capital = new_capital
+            # Also update current_cash to match (reset balance)
+            account.current_cash = new_capital
+            account.frozen_cash = 0.0
+            logger.info(f"Updated initial_capital to: {new_capital} (balance reset)")
+
         db.commit()
         db.refresh(account)
         logger.info(f"Account {account_id} updated successfully")
@@ -281,6 +298,7 @@ async def update_account_settings(account_id: int, payload: dict, db: Session = 
             "model": account.model,
             "base_url": account.base_url,
             "api_key": account.api_key,
+            "custom_instructions": account.custom_instructions,
             "is_active": account.is_active == "true"
         }
     except HTTPException:
@@ -446,6 +464,57 @@ async def get_asset_curve_by_timeframe(
         raise HTTPException(status_code=500, detail=f"Failed to get asset curve for timeframe: {str(e)}")
 
 
+@router.delete("/{account_id}")
+async def delete_account(account_id: int, db: Session = Depends(get_db)):
+    """Delete an account and all its related data"""
+    try:
+        logger.info(f"Deleting account {account_id}")
+
+        account = db.query(Account).filter(
+            Account.id == account_id,
+            Account.is_active == "true"
+        ).first()
+
+        if not account:
+            raise HTTPException(status_code=404, detail="Account not found")
+
+        # Delete related data (positions, orders, trades, AI decisions)
+        from database.models import Position, Order, Trade, AIDecisionLog
+
+        # Delete AI decision logs
+        db.query(AIDecisionLog).filter(AIDecisionLog.account_id == account_id).delete(synchronize_session=False)
+
+        # Delete trades
+        db.query(Trade).filter(Trade.account_id == account_id).delete(synchronize_session=False)
+
+        # Delete orders
+        db.query(Order).filter(Order.account_id == account_id).delete(synchronize_session=False)
+
+        # Delete positions
+        db.query(Position).filter(Position.account_id == account_id).delete(synchronize_session=False)
+
+        # Delete the account
+        db.delete(account)
+        db.commit()
+
+        logger.info(f"Account {account_id} deleted successfully")
+
+        # Reset auto trading job after deleting account
+        try:
+            from services.scheduler import reset_auto_trading_job
+            reset_auto_trading_job()
+            logger.info("Auto trading job reset successfully after account deletion")
+        except Exception as e:
+            logger.warning(f"Failed to reset auto trading job: {e}")
+
+        return {"message": "Account deleted successfully", "id": account_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete account: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete account: {str(e)}")
+
+
 @router.post("/test-llm")
 async def test_llm_connection(payload: dict):
     """Test LLM connection with provided credentials"""
@@ -489,12 +558,14 @@ async def test_llm_connection(payload: dict):
             api_endpoint = f"{base_url}/chat/completions"
             
             # Make the request
+            # Use verify=False only for localhost (Ollama, LM Studio), enable SSL for external APIs
+            verify_ssl = not api_endpoint.startswith('http://localhost') and not api_endpoint.startswith('http://127.0.0.1')
             response = requests.post(
                 api_endpoint,
                 headers=headers,
                 json=payload_data,
-                timeout=10.0,
-                verify=False  # Disable SSL verification for custom AI endpoints
+                timeout=40.0,  # Timeout for local models (Ollama, LM Studio)
+                verify=verify_ssl
             )
             
             # Check response status

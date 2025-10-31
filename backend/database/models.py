@@ -46,7 +46,8 @@ class Account(Base):
     model = Column(String(100), nullable=True, default="gpt-4")  # AI model name
     base_url = Column(String(500), nullable=True, default="https://api.openai.com/v1")  # API endpoint
     api_key = Column(String(500), nullable=True)  # API key for authentication
-    
+    custom_instructions = Column(String(2000), nullable=True)  # Custom instructions for AI trading decisions
+
     # Trading Account Balances (USD for CRYPTO market)
     initial_capital = Column(DECIMAL(18, 2), nullable=False, default=10000.00)
     current_cash = Column(DECIMAL(18, 2), nullable=False, default=10000.00)
@@ -227,6 +228,21 @@ class AIDecisionLog(Base):
     # Relationships
     account = relationship("Account")
     order = relationship("Order")
+    qa_entries = relationship("AIDecisionQA", back_populates="decision")
+
+
+class AIDecisionQA(Base):
+    """Q&A entries for AI decisions - allows users to ask questions about specific decisions"""
+    __tablename__ = "ai_decision_qa"
+
+    id = Column(Integer, primary_key=True, index=True)
+    decision_id = Column(Integer, ForeignKey("ai_decision_logs.id"), nullable=False)
+    question = Column(String(1000), nullable=False)  # User's question
+    answer = Column(String(2000), nullable=False)  # AI's answer
+    created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
+
+    # Relationships
+    decision = relationship("AIDecisionLog", back_populates="qa_entries")
 
 
 # CRYPTO market trading configuration constants

@@ -33,6 +33,15 @@ SUPPORTED_SYMBOLS: Dict[str, str] = {
     "DOGE": "Dogecoin",
     "XRP": "Ripple",
     "BNB": "Binance Coin",
+    "ADA": "Cardano",
+    "USDC": "USDC",
+    "PENGU": "PENGU",
+    "PEPE": "Pepe",
+    "XPL": "Plasma",
+    "KAITO": "Kaito",
+    "LTC": "Litecoin",
+    "W": "Wormhole",
+    "VANA": "Vana",
 }
 
 
@@ -76,6 +85,16 @@ def call_ai_for_decision(account: Account, portfolio: Dict, prices: Dict[str, fl
         news_summary = fetch_latest_news()
         news_section = news_summary if news_summary else "No recent CoinJournal news available."
 
+        # Add custom instructions section if provided
+        custom_instructions_section = ""
+        if account.custom_instructions and account.custom_instructions.strip():
+            custom_instructions_section = f"""
+IMPORTANT - CUSTOM USER INSTRUCTIONS:
+{account.custom_instructions}
+
+Follow these instructions carefully when making your trading decision.
+"""
+
         prompt = f"""You are a cryptocurrency trading AI. Based on the following portfolio and market data, decide on a trading action.
 
 Portfolio Data:
@@ -89,11 +108,11 @@ Current Market Prices:
 
 Latest Crypto News (CoinJournal):
 {news_section}
-
+{custom_instructions_section}
 Analyze the market and portfolio, then respond with ONLY a JSON object in this exact format:
 {{
   "operation": "buy" or "sell" or "hold",
-  "symbol": "BTC" or "ETH" or "SOL" or "BNB" or "XRP" or "DOGE",
+  "symbol": "BTC" or "ETH" or "SOL" or "DOGE" or "XRP" or "BNB" or "ADA" or "USDC" or "PENGU" or "PEPE" or "XPL" or "KAITO" or "LTC" or "W" or "VANA",
   "target_portion_of_balance": 0.2,
   "reason": "Brief explanation of your decision"
 }}
@@ -134,12 +153,14 @@ Rules:
         max_retries = 3
         for attempt in range(max_retries):
             try:
+                # Use verify=False only for localhost (Ollama, LM Studio), enable SSL for external APIs
+                verify_ssl = not api_endpoint.startswith('http://localhost') and not api_endpoint.startswith('http://127.0.0.1')
                 response = requests.post(
                     api_endpoint,
                     headers=headers,
                     json=payload,
-                    timeout=30,
-                    verify=False  # Disable SSL verification for custom AI endpoints
+                    timeout=60,  # Extended timeout for slower local models
+                    verify=verify_ssl
                 )
                 
                 if response.status_code == 200:

@@ -45,7 +45,7 @@ interface AssetCurveProps {
 type Timeframe = '5m' | '1h' | '1d'
 
 export default function AssetCurve({ data: initialData, wsRef }: AssetCurveProps) {
-  const [timeframe, setTimeframe] = useState<Timeframe>('1h')
+  const [timeframe, setTimeframe] = useState<Timeframe>('5m')
   const [data, setData] = useState<AssetCurveData[]>(initialData || [])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

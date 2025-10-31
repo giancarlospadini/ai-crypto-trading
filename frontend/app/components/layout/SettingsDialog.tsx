@@ -10,10 +10,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Trash2, Plus, Pencil } from 'lucide-react'
-import { 
+import {
   getAccounts as getAccounts,
   createAccount as createAccount,
   updateAccount as updateAccount,
+  deleteAccount as deleteAccount,
   testLLMConnection,
   type TradingAccount,
   type TradingAccountCreate,
@@ -30,12 +31,14 @@ interface AIAccount extends TradingAccount {
   model?: string
   base_url?: string
   api_key?: string
+  custom_instructions?: string
 }
 
 interface AIAccountCreate extends TradingAccountCreate {
   model?: string
   base_url?: string
   api_key?: string
+  custom_instructions?: string
 }
 
 export default function SettingsDialog({ open, onOpenChange, onAccountUpdated }: SettingsDialogProps) {
@@ -51,12 +54,15 @@ export default function SettingsDialog({ open, onOpenChange, onAccountUpdated }:
     model: '',
     base_url: '',
     api_key: 'default-key-please-update-in-settings',
+    initial_capital: 10000,
+    custom_instructions: '',
   })
   const [editAccount, setEditAccount] = useState<AIAccountCreate>({
     name: '',
     model: '',
     base_url: '',
     api_key: 'default-key-please-update-in-settings',
+    custom_instructions: '',
   })
 
   const loadAccounts = async () => {
@@ -126,7 +132,7 @@ export default function SettingsDialog({ open, onOpenChange, onAccountUpdated }:
 
       console.log('Creating account with data:', newAccount)
       await createAccount(newAccount)
-      setNewAccount({ name: '', model: '', base_url: '', api_key: 'default-key-please-update-in-settings' })
+      setNewAccount({ name: '', model: '', base_url: '', api_key: 'default-key-please-update-in-settings', initial_capital: 10000 })
       setShowAddForm(false)
       await loadAccounts()
 
@@ -224,6 +230,8 @@ export default function SettingsDialog({ open, onOpenChange, onAccountUpdated }:
       model: account.model || '',
       base_url: account.base_url || '',
       api_key: account.api_key || '',
+      initial_capital: account.initial_capital || 10000,
+      custom_instructions: account.custom_instructions || '',
     })
   }
 
@@ -232,6 +240,28 @@ export default function SettingsDialog({ open, onOpenChange, onAccountUpdated }:
     setEditAccount({ name: '', model: '', base_url: '', api_key: 'default-key-please-update-in-settings' })
     setTestResult(null)
     setError(null)
+  }
+
+  const handleDeleteAccount = async (accountId: number, accountName: string) => {
+    if (!confirm(`Are you sure you want to delete account "${accountName}"? This will delete all associated data (positions, orders, trades).`)) {
+      return
+    }
+
+    try {
+      setLoading(true)
+      await deleteAccount(accountId)
+      await loadAccounts()
+      toast.success('Account deleted successfully!')
+
+      // Notify parent component that account was deleted
+      onAccountUpdated?.()
+    } catch (error) {
+      console.error('Failed to delete account:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete account'
+      toast.error(`Failed to delete account: ${errorMessage}`)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -296,6 +326,25 @@ export default function SettingsDialog({ open, onOpenChange, onAccountUpdated }:
                           value={editAccount.api_key || ''}
                           onChange={(e) => setEditAccount({ ...editAccount, api_key: e.target.value })}
                         />
+                        <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
+                          <Input
+                            placeholder="Initial Capital (USD)"
+                            type="number"
+                            value={editAccount.initial_capital || 10000}
+                            onChange={(e) => setEditAccount({ ...editAccount, initial_capital: parseFloat(e.target.value) || 10000 })}
+                          />
+                          <p className="text-xs text-yellow-700 mt-1">⚠️ Warning: Changing capital will reset account balance and clear positions</p>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Custom AI Instructions (Optional)</label>
+                          <textarea
+                            placeholder="e.g., 'Focus on meme coins', 'Keep 50% in cash', 'Avoid BTC today'..."
+                            className="w-full min-h-[100px] p-2 border rounded-md text-sm resize-vertical"
+                            value={editAccount.custom_instructions || ''}
+                            onChange={(e) => setEditAccount({ ...editAccount, custom_instructions: e.target.value })}
+                          />
+                          <p className="text-xs text-muted-foreground">💡 Add specific instructions for the AI to follow when making trading decisions</p>
+                        </div>
                         {testResult && (
                           <div className={`text-xs p-2 rounded ${
                             testResult.includes('❌') 
@@ -340,8 +389,18 @@ export default function SettingsDialog({ open, onOpenChange, onAccountUpdated }:
                             onClick={() => startEdit(account)}
                             variant="outline"
                             size="sm"
+                            disabled={loading}
                           >
                             <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteAccount(account.id, account.name)}
+                            variant="outline"
+                            size="sm"
+                            disabled={loading}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
@@ -380,6 +439,22 @@ export default function SettingsDialog({ open, onOpenChange, onAccountUpdated }:
                   value={newAccount.api_key || ''}
                   onChange={(e) => setNewAccount({ ...newAccount, api_key: e.target.value })}
                 />
+                <Input
+                  placeholder="Initial Capital (USD)"
+                  type="number"
+                  value={newAccount.initial_capital || 10000}
+                  onChange={(e) => setNewAccount({ ...newAccount, initial_capital: parseFloat(e.target.value) || 10000 })}
+                />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Custom AI Instructions (Optional)</label>
+                  <textarea
+                    placeholder="e.g., 'Focus on meme coins', 'Keep 50% in cash', 'Avoid BTC today'..."
+                    className="w-full min-h-[100px] p-2 border rounded-md text-sm resize-vertical"
+                    value={newAccount.custom_instructions || ''}
+                    onChange={(e) => setNewAccount({ ...newAccount, custom_instructions: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">💡 Add specific instructions for the AI to follow when making trading decisions</p>
+                </div>
                 <div className="flex gap-2">
                   <Button onClick={handleCreateAccount} disabled={loading}>
                     Test and Create

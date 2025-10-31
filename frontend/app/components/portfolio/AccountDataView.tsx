@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast'
 import AssetCurveWithData from './AssetCurveWithData'
 import AccountSelector from '@/components/layout/AccountSelector'
 import TradingPanel from '@/components/trading/TradingPanel'
+import AccountChat from './AccountChat'
 import { Doughnut } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { AIDecision } from '@/lib/api'
@@ -140,13 +141,13 @@ export default function AccountDataView({
       <div className={`grid gap-6 overflow-hidden ${showAssetCurves ? 'grid-cols-5' : 'grid-cols-1'} h-full`}>
         {/* Asset Curves */}
         {showAssetCurves && (
-          <div className="col-span-3">
+          <div className="col-span-1">
             <AssetCurveWithData data={allAssetCurves} wsRef={wsRef} />
           </div>
         )}
 
         {/* Tabs and Trading Panel */}
-        <div className={`${showAssetCurves ? 'col-span-2' : 'col-span-1'} overflow-hidden flex flex-col`}>
+        <div className={`${showAssetCurves ? 'col-span-4' : 'col-span-1'} overflow-hidden flex flex-col`}>
           {/* Account Selector */}
           <div className="flex justify-end mb-4">
             <AccountSelector
@@ -163,8 +164,9 @@ export default function AccountDataView({
             {/* Tabs */}
             <div className={`${showTradingPanel ? 'col-span-3' : 'col-span-1'} overflow-hidden`}>
               <Tabs defaultValue="ai-decisions" className="h-full flex flex-col">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="ai-decisions">AI Decisions</TabsTrigger>
+                  <TabsTrigger value="chat">💬 Chat AI</TabsTrigger>
                   <TabsTrigger value="positions">Positions</TabsTrigger>
                   <TabsTrigger value="orders">Orders</TabsTrigger>
                   <TabsTrigger value="trades">Trades</TabsTrigger>
@@ -173,6 +175,10 @@ export default function AccountDataView({
                 <div className="flex-1 overflow-hidden">
                   <TabsContent value="ai-decisions" className="h-full overflow-y-auto">
                     <AIDecisionLog aiDecisions={aiDecisions} />
+                  </TabsContent>
+
+                  <TabsContent value="chat" className="h-full overflow-y-auto">
+                    <AccountChat accountId={overview.account.id} />
                   </TabsContent>
 
                   <TabsContent value="positions" className="h-full overflow-y-auto">
