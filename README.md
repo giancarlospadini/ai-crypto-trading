@@ -1,4 +1,4 @@
-# Open Alpha Arena
+# Based on Open Alpha Arena
 
 <img width="3840" height="1498" alt="image" src="https://github.com/user-attachments/assets/dac4b5d1-3da7-4b54-97e5-cef226d99547" />
 
@@ -34,6 +34,8 @@ TODO:
 ### Install
 ```bash
 # install JS deps and sync Python env
+pip install uv
+npm install -g pnpm
 pnpm run install:all
 ```
 

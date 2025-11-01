@@ -25,9 +25,9 @@ def initialize_services():
         setup_market_tasks()
         logger.info("Market scheduled tasks have been set up")
 
-        # Start automatic cryptocurrency trading simulation task (5-minute interval)
-        schedule_auto_trading(interval_seconds=300)
-        logger.info("Automatic cryptocurrency trading task started (5-minute interval)")
+        # Start automatic cryptocurrency trading simulation task (10-minute interval)
+        schedule_auto_trading(interval_seconds=600)
+        logger.info("Automatic cryptocurrency trading task started (10-minute interval)")
         
         # Add price cache cleanup task (every 2 minutes)
         from services.price_cache import clear_expired_prices
