@@ -37,7 +37,24 @@ def initialize_services():
             task_id="price_cache_cleanup"
         )
         logger.info("Price cache cleanup task started (2-minute interval)")
-        
+
+        # Add kline data update task (every 2 hours)
+        from services.kline_updater import update_klines_for_trading_symbols
+        task_scheduler.add_interval_task(
+            task_func=update_klines_for_trading_symbols,
+            interval_seconds=7200,  # Update every 2 hours
+            task_id="kline_data_update"
+        )
+        logger.info("Kline data update task started (2-hour interval)")
+
+        # Execute initial kline update in background thread
+        initial_kline_update = threading.Thread(
+            target=update_klines_for_trading_symbols,
+            daemon=True
+        )
+        initial_kline_update.start()
+        logger.info("Initial kline data update started in background")
+
         logger.info("All services initialized successfully")
         
     except Exception as e:
