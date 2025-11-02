@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from database.models import Position, Account, AIDecisionLog
 from services.asset_calculator import calc_positions_value
 from services.news_feed import fetch_latest_news
+from services.technical_indicators import get_technical_analysis_summary
 
 
 logger = logging.getLogger(__name__)
@@ -74,16 +75,36 @@ def _get_portfolio_data(db: Session, account: Account) -> Dict:
     }
 
 
-def call_ai_for_decision(account: Account, portfolio: Dict, prices: Dict[str, float]) -> Optional[Dict]:
+def call_ai_for_decision(db: Session, account: Account, portfolio: Dict, prices: Dict[str, float]) -> Optional[Dict]:
     """Call AI model API to get trading decision"""
     # Check if this is a default API key
     if _is_default_api_key(account.api_key):
         logger.info(f"Skipping AI trading for account {account.name} - using default API key")
         return None
-    
+
     try:
         news_summary = fetch_latest_news()
         news_section = news_summary if news_summary else "No recent CoinJournal news available."
+
+        # Get technical analysis for all symbols with prices
+        symbols = list(prices.keys())
+        technical_analysis = get_technical_analysis_summary(db, symbols, prices)
+
+        # Format technical analysis for the prompt
+        tech_analysis_section = "Technical Analysis:\n"
+        for symbol, indicators in technical_analysis.items():
+            if indicators.get("available"):
+                tech_analysis_section += f"\n{symbol}:\n"
+                tech_analysis_section += f"  Current Price: ${indicators['current_price']:.2f}\n"
+                tech_analysis_section += f"  RSI (14): {indicators['rsi_14']:.2f} ({indicators['rsi_interpretation']})\n"
+                tech_analysis_section += f"  SMA 20: ${indicators['sma_20']:.2f} (price is {indicators['price_vs_sma20']})\n"
+                tech_analysis_section += f"  SMA 50: ${indicators['sma_50']:.2f} (price is {indicators['price_vs_sma50']})\n"
+                tech_analysis_section += f"  Bollinger Bands: {indicators['bollinger_position']}\n"
+                tech_analysis_section += f"  MACD Signal: {indicators['macd_signal']}\n"
+                tech_analysis_section += f"  Momentum: {indicators['momentum']:.4f}\n"
+                tech_analysis_section += f"  Support Factor: {indicators['support']['support_factor']:.4f}\n"
+            else:
+                tech_analysis_section += f"\n{symbol}: {indicators.get('reason', 'No data')}\n"
 
         # Add custom instructions section if provided
         custom_instructions_section = ""
@@ -95,7 +116,7 @@ IMPORTANT - CUSTOM USER INSTRUCTIONS:
 Follow these instructions carefully when making your trading decision.
 """
 
-        prompt = f"""You are a cryptocurrency trading AI. Based on the following portfolio and market data, decide on a trading action.
+        prompt = f"""You are a cryptocurrency trading AI. Based on the following portfolio, market data, and technical analysis, decide on a trading action.
 
 Portfolio Data:
 - Cash Available: ${portfolio['cash']:.2f}
@@ -106,10 +127,12 @@ Portfolio Data:
 Current Market Prices:
 {json.dumps(prices, indent=2)}
 
+{tech_analysis_section}
+
 Latest Crypto News (CoinJournal):
 {news_section}
 {custom_instructions_section}
-Analyze the market and portfolio, then respond with ONLY a JSON object in this exact format:
+Analyze the market data, technical indicators, news, and portfolio, then respond with ONLY a JSON object in this exact format:
 {{
   "operation": "buy" or "sell" or "hold",
   "symbol": "BTC" or "ETH" or "SOL" or "DOGE" or "XRP" or "BNB" or "ADA" or "USDC" or "PENGU" or "PEPE" or "XPL" or "KAITO" or "LTC" or "W" or "VANA",

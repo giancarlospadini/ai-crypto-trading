@@ -6,7 +6,7 @@ Provides K-line data database operations
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from typing import List, Optional
-from database.models import cryptoKline
+from database.models import CryptoKline
 from database.connection import get_db
 
 
@@ -36,12 +36,12 @@ class KlineRepository:
                 continue
                 
             # Check if record with same timestamp already exists
-            existing = self.db.query(cryptoKline).filter(
+            existing = self.db.query(CryptoKline).filter(
                 and_(
-                    cryptoKline.symbol == symbol,
-                    cryptoKline.market == market,
-                    cryptoKline.period == period,
-                    cryptoKline.timestamp == timestamp
+                    CryptoKline.symbol == symbol,
+                    CryptoKline.market == market,
+                    CryptoKline.period == period,
+                    CryptoKline.timestamp == timestamp
                 )
             ).first()
             
@@ -69,7 +69,7 @@ class KlineRepository:
                 updated_count += 1
             else:
                 # Insert new record
-                kline_record = cryptoKline(**kline_data_dict)
+                kline_record = CryptoKline(**kline_data_dict)
                 self.db.add(kline_record)
                 inserted_count += 1
         
@@ -82,7 +82,7 @@ class KlineRepository:
             'total': inserted_count + updated_count
         }
 
-    def get_kline_data(self, symbol: str, market: str, period: str, limit: int = 100) -> List[cryptoKline]:
+    def get_kline_data(self, symbol: str, market: str, period: str, limit: int = 100) -> List[CryptoKline]:
         """
         Get K-line data
 
@@ -95,13 +95,13 @@ class KlineRepository:
         Returns:
             K-line data list
         """
-        return self.db.query(cryptoKline).filter(
+        return self.db.query(CryptoKline).filter(
             and_(
-                cryptoKline.symbol == symbol,
-                cryptoKline.market == market,
-                cryptoKline.period == period
+                CryptoKline.symbol == symbol,
+                CryptoKline.market == market,
+                CryptoKline.period == period
             )
-        ).order_by(cryptoKline.timestamp.desc()).limit(limit).all()
+        ).order_by(CryptoKline.timestamp.desc()).limit(limit).all()
 
     def delete_old_kline_data(self, symbol: str, market: str, period: str, keep_days: int = 30):
         """
@@ -116,12 +116,12 @@ class KlineRepository:
         import time
         cutoff_timestamp = int((time.time() - keep_days * 24 * 3600) * 1000)
         
-        self.db.query(cryptoKline).filter(
+        self.db.query(CryptoKline).filter(
             and_(
-                cryptoKline.symbol == symbol,
-                cryptoKline.market == market,
-                cryptoKline.period == period,
-                cryptoKline.timestamp < cutoff_timestamp
+                CryptoKline.symbol == symbol,
+                CryptoKline.market == market,
+                CryptoKline.period == period,
+                CryptoKline.timestamp < cutoff_timestamp
             )
         ).delete()
         
