@@ -11,8 +11,7 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-NEWS_FEED_URL = "https://coinjournal.net/news/feed/"
-NEWS_FEED_URL = "https://cryptonews.com/news/feed/"
+NEWS_FEED_URL = "https://www.backinput.com/feed/"
 
 
 def _strip_html_tags(text: str) -> str:

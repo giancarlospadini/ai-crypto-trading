@@ -32,6 +32,8 @@ interface AIAccount extends TradingAccount {
   base_url?: string
   api_key?: string
   custom_instructions?: string
+  use_news?: boolean
+  use_technical_analysis?: boolean
 }
 
 interface AIAccountCreate extends TradingAccountCreate {
@@ -39,6 +41,8 @@ interface AIAccountCreate extends TradingAccountCreate {
   base_url?: string
   api_key?: string
   custom_instructions?: string
+  use_news?: boolean
+  use_technical_analysis?: boolean
 }
 
 export default function SettingsDialog({ open, onOpenChange, onAccountUpdated }: SettingsDialogProps) {
@@ -56,6 +60,8 @@ export default function SettingsDialog({ open, onOpenChange, onAccountUpdated }:
     api_key: 'default-key-please-update-in-settings',
     initial_capital: 10000,
     custom_instructions: '',
+    use_news: true,
+    use_technical_analysis: true,
   })
   const [editAccount, setEditAccount] = useState<AIAccountCreate>({
     name: '',
@@ -63,6 +69,8 @@ export default function SettingsDialog({ open, onOpenChange, onAccountUpdated }:
     base_url: '',
     api_key: 'default-key-please-update-in-settings',
     custom_instructions: '',
+    use_news: true,
+    use_technical_analysis: true,
   })
 
   const loadAccounts = async () => {
@@ -232,6 +240,8 @@ export default function SettingsDialog({ open, onOpenChange, onAccountUpdated }:
       api_key: account.api_key || '',
       initial_capital: account.initial_capital || 10000,
       custom_instructions: account.custom_instructions || '',
+      use_news: account.use_news ?? true,
+      use_technical_analysis: account.use_technical_analysis ?? true,
     })
   }
 
@@ -345,6 +355,29 @@ export default function SettingsDialog({ open, onOpenChange, onAccountUpdated }:
                           />
                           <p className="text-xs text-muted-foreground">💡 Add specific instructions for the AI to follow when making trading decisions</p>
                         </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Analysis Options</label>
+                          <div className="flex items-center gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={editAccount.use_news ?? true}
+                                onChange={(e) => setEditAccount({ ...editAccount, use_news: e.target.checked })}
+                                className="w-4 h-4 rounded border-gray-300"
+                              />
+                              <span className="text-sm">Use News</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={editAccount.use_technical_analysis ?? true}
+                                onChange={(e) => setEditAccount({ ...editAccount, use_technical_analysis: e.target.checked })}
+                                className="w-4 h-4 rounded border-gray-300"
+                              />
+                              <span className="text-sm">Use Technical Analysis</span>
+                            </label>
+                          </div>
+                        </div>
                         {testResult && (
                           <div className={`text-xs p-2 rounded ${
                             testResult.includes('❌') 
@@ -454,6 +487,29 @@ export default function SettingsDialog({ open, onOpenChange, onAccountUpdated }:
                     onChange={(e) => setNewAccount({ ...newAccount, custom_instructions: e.target.value })}
                   />
                   <p className="text-xs text-muted-foreground">💡 Add specific instructions for the AI to follow when making trading decisions</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Analysis Options</label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newAccount.use_news ?? true}
+                        onChange={(e) => setNewAccount({ ...newAccount, use_news: e.target.checked })}
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm">Use News</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newAccount.use_technical_analysis ?? true}
+                        onChange={(e) => setNewAccount({ ...newAccount, use_technical_analysis: e.target.checked })}
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm">Use Technical Analysis</span>
+                    </label>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button onClick={handleCreateAccount} disabled={loading}>

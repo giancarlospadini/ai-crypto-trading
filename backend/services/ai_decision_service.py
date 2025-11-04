@@ -36,13 +36,7 @@ SUPPORTED_SYMBOLS: Dict[str, str] = {
     "BNB": "Binance Coin",
     "ADA": "Cardano",
     "USDC": "USDC",
-    "PENGU": "PENGU",
-    "PEPE": "Pepe",
-    "XPL": "Plasma",
-    "KAITO": "Kaito",
     "LTC": "Litecoin",
-    "W": "Wormhole",
-    "VANA": "Vana",
 }
 
 
@@ -83,28 +77,37 @@ def call_ai_for_decision(db: Session, account: Account, portfolio: Dict, prices:
         return None
 
     try:
-        news_summary = fetch_latest_news()
-        news_section = news_summary if news_summary else "No recent CoinJournal news available."
-
-        # Get technical analysis for all symbols with prices
-        symbols = list(prices.keys())
-        technical_analysis = get_technical_analysis_summary(db, symbols, prices)
-
-        # Format technical analysis for the prompt
-        tech_analysis_section = "Technical Analysis:\n"
-        for symbol, indicators in technical_analysis.items():
-            if indicators.get("available"):
-                tech_analysis_section += f"\n{symbol}:\n"
-                tech_analysis_section += f"  Current Price: ${indicators['current_price']:.2f}\n"
-                tech_analysis_section += f"  RSI (14): {indicators['rsi_14']:.2f} ({indicators['rsi_interpretation']})\n"
-                tech_analysis_section += f"  SMA 20: ${indicators['sma_20']:.2f} (price is {indicators['price_vs_sma20']})\n"
-                tech_analysis_section += f"  SMA 50: ${indicators['sma_50']:.2f} (price is {indicators['price_vs_sma50']})\n"
-                tech_analysis_section += f"  Bollinger Bands: {indicators['bollinger_position']}\n"
-                tech_analysis_section += f"  MACD Signal: {indicators['macd_signal']}\n"
-                tech_analysis_section += f"  Momentum: {indicators['momentum']:.4f}\n"
-                tech_analysis_section += f"  Support Factor: {indicators['support']['support_factor']:.4f}\n"
+        # Conditionally fetch news based on account settings
+        news_section = ""
+        if account.use_news == "true":
+            news_summary = fetch_latest_news()
+            if news_summary:
+                news_section = news_summary
             else:
-                tech_analysis_section += f"\n{symbol}: {indicators.get('reason', 'No data')}\n"
+                news_section = "No recent CoinJournal news available."
+
+        # Conditionally fetch technical analysis based on account settings
+        tech_analysis_section = ""
+        if account.use_technical_analysis == "true":
+            # Get technical analysis for all symbols with prices
+            symbols = list(prices.keys())
+            technical_analysis = get_technical_analysis_summary(db, symbols, prices)
+
+            # Format technical analysis for the prompt
+            tech_analysis_section = "Technical Analysis:\n"
+            for symbol, indicators in technical_analysis.items():
+                if indicators.get("available"):
+                    tech_analysis_section += f"\n{symbol}:\n"
+                    tech_analysis_section += f"  Current Price: ${indicators['current_price']:.2f}\n"
+                    tech_analysis_section += f"  RSI (14): {indicators['rsi_14']:.2f} ({indicators['rsi_interpretation']})\n"
+                    tech_analysis_section += f"  SMA 20: ${indicators['sma_20']:.2f} (price is {indicators['price_vs_sma20']})\n"
+                    tech_analysis_section += f"  SMA 50: ${indicators['sma_50']:.2f} (price is {indicators['price_vs_sma50']})\n"
+                    tech_analysis_section += f"  Bollinger Bands: {indicators['bollinger_position']}\n"
+                    tech_analysis_section += f"  MACD Signal: {indicators['macd_signal']}\n"
+                    tech_analysis_section += f"  Momentum: {indicators['momentum']:.4f}\n"
+                    tech_analysis_section += f"  Support Factor: {indicators['support']['support_factor']:.4f}\n"
+                else:
+                    tech_analysis_section += f"\n{symbol}: {indicators.get('reason', 'No data')}\n"
 
         # Add custom instructions section if provided
         custom_instructions_section = ""
@@ -116,9 +119,10 @@ IMPORTANT - CUSTOM USER INSTRUCTIONS:
 Follow these instructions carefully when making your trading decision.
 """
 
-        prompt = f"""You are a cryptocurrency trading AI. Based on the following portfolio, market data, and technical analysis, decide on a trading action.
+        # Build the prompt dynamically based on enabled features
+        prompt_parts = ["You are a cryptocurrency trading AI. Based on the following portfolio and market data, decide on a trading action.\n"]
 
-Portfolio Data:
+        prompt_parts.append(f"""Portfolio Data:
 - Cash Available: ${portfolio['cash']:.2f}
 - Frozen Cash: ${portfolio['frozen_cash']:.2f}
 - Total Assets: ${portfolio['total_assets']:.2f}
@@ -126,16 +130,34 @@ Portfolio Data:
 
 Current Market Prices:
 {json.dumps(prices, indent=2)}
+""")
 
-{tech_analysis_section}
+        # Add technical analysis section if enabled
+        if tech_analysis_section:
+            prompt_parts.append(f"\n{tech_analysis_section}\n")
 
-Latest Crypto News (CoinJournal):
-{news_section}
-{custom_instructions_section}
-Analyze the market data, technical indicators, news, and portfolio, then respond with ONLY a JSON object in this exact format:
+        # Add news section if enabled
+        if news_section:
+            prompt_parts.append(f"\nLatest Crypto News (CoinJournal):\n{news_section}\n")
+
+        # Add custom instructions if provided
+        if custom_instructions_section:
+            prompt_parts.append(custom_instructions_section)
+
+        # Add the final instruction
+        analysis_context = []
+        if tech_analysis_section:
+            analysis_context.append("technical indicators")
+        if news_section:
+            analysis_context.append("news")
+
+        context_str = ", ".join(analysis_context) if analysis_context else "available data"
+        prompt_parts.append(f"Analyze the market data{', ' + context_str if analysis_context else ''}, and portfolio, then respond with ONLY a JSON object in this exact format:")
+
+        prompt = "".join(prompt_parts) + """
 {{
   "operation": "buy" or "sell" or "hold",
-  "symbol": "BTC" or "ETH" or "SOL" or "DOGE" or "XRP" or "BNB" or "ADA" or "USDC" or "PENGU" or "PEPE" or "XPL" or "KAITO" or "LTC" or "W" or "VANA",
+  "symbol": "BTC" or "ETH" or "SOL" or "DOGE" or "XRP" or "BNB" or "ADA" or "USDC",
   "target_portion_of_balance": 0.2,
   "reason": "Brief explanation of your decision"
 }}
@@ -146,6 +168,7 @@ Rules:
 - For "sell": symbol is what to sell, target_portion_of_balance is % of position to sell (0.0-1.0)
 - For "hold": no action taken
 - Keep target_portion_of_balance between 0.1 and 0.3 for risk management
+- Execute buy trades of at least $20
 - Only choose symbols you have data for"""
 
         headers = {

@@ -255,7 +255,7 @@ export default function AssetCurve({ data: initialData, wsRef }: AssetCurveProps
             </TabsList>
           </Tabs>
         </div>
-        <div className="h-[calc(80vh-10rem)]">
+        <div className="h-[400px]">
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-muted-foreground">Loading...</div>

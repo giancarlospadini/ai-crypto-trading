@@ -10,6 +10,8 @@ class AccountCreate(BaseModel):
     api_key: str
     initial_capital: float = 10000.0
     account_type: str = "AI"  # "AI" or "MANUAL"
+    use_news: bool = True
+    use_technical_analysis: bool = True
 
 
 class AccountUpdate(BaseModel):
@@ -18,6 +20,8 @@ class AccountUpdate(BaseModel):
     model: Optional[str] = None
     base_url: Optional[str] = None
     api_key: Optional[str] = None
+    use_news: Optional[bool] = None
+    use_technical_analysis: Optional[bool] = None
 
 
 class AccountOut(BaseModel):
@@ -33,6 +37,8 @@ class AccountOut(BaseModel):
     frozen_cash: float
     account_type: str
     is_active: bool
+    use_news: bool
+    use_technical_analysis: bool
 
     class Config:
         from_attributes = True

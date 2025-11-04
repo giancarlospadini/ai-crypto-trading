@@ -47,6 +47,8 @@ class Account(Base):
     base_url = Column(String(500), nullable=True, default="https://api.openai.com/v1")  # API endpoint
     api_key = Column(String(500), nullable=True)  # API key for authentication
     custom_instructions = Column(String(2000), nullable=True)  # Custom instructions for AI trading decisions
+    use_news = Column(String(10), nullable=False, default="true")  # Whether to include news in AI analysis
+    use_technical_analysis = Column(String(10), nullable=False, default="true")  # Whether to include technical analysis
 
     # Trading Account Balances (USD for CRYPTO market)
     initial_capital = Column(DECIMAL(18, 2), nullable=False, default=10000.00)
@@ -236,7 +238,7 @@ class AIDecisionQA(Base):
     __tablename__ = "ai_decision_qa"
 
     id = Column(Integer, primary_key=True, index=True)
-    decision_id = Column(Integer, ForeignKey("ai_decision_logs.id"), nullable=False)
+    decision_id = Column(Integer, ForeignKey("ai_decision_logs.id"), nullable=True)  # Allow NULL for general questions
     question = Column(String(1000), nullable=False)  # User's question
     answer = Column(String(2000), nullable=False)  # AI's answer
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
