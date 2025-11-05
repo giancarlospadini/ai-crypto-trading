@@ -261,7 +261,11 @@ Rules:
                 text_content = text_content.split("```json")[1].split("```")[0].strip()
             elif "```" in text_content:
                 text_content = text_content.split("```")[1].split("```")[0].strip()
-            
+
+            # Remove double braces that some models add (e.g., {{ }} instead of { })
+            if text_content.startswith("{{") and text_content.endswith("}}"):
+                text_content = text_content[1:-1].strip()
+
             # Handle potential JSON parsing issues with escape sequences
             try:
                 decision = json.loads(text_content)
