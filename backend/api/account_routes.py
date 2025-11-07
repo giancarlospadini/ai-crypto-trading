@@ -49,7 +49,9 @@ async def list_all_accounts(db: Session = Depends(get_db)):
                 "base_url": account.base_url,
                 "api_key": account.api_key,
                 "custom_instructions": account.custom_instructions,
-                "is_active": account.is_active == "true"
+                "is_active": account.is_active == "true",
+                "use_news": account.use_news == "true",
+                "use_technical_analysis": account.use_technical_analysis == "true"
             })
         
         return result
@@ -185,7 +187,9 @@ async def create_new_account(payload: dict, db: Session = Depends(get_db)):
             initial_capital=float(payload.get("initial_capital", 10000.0)),
             current_cash=float(payload.get("initial_capital", 10000.0)),
             frozen_cash=0.0,
-            is_active="true"
+            is_active="true",
+            use_news="true" if payload.get("use_news", True) else "false",
+            use_technical_analysis="true" if payload.get("use_technical_analysis", True) else "false"
         )
         
         db.add(new_account)
@@ -212,7 +216,9 @@ async def create_new_account(payload: dict, db: Session = Depends(get_db)):
             "model": new_account.model,
             "base_url": new_account.base_url,
             "api_key": new_account.api_key,
-            "is_active": new_account.is_active == "true"
+            "is_active": new_account.is_active == "true",
+            "use_news": new_account.use_news == "true",
+            "use_technical_analysis": new_account.use_technical_analysis == "true"
         }
     except HTTPException:
         raise
@@ -259,6 +265,14 @@ async def update_account_settings(account_id: int, payload: dict, db: Session = 
             account.custom_instructions = payload["custom_instructions"]
             logger.info(f"Updated custom_instructions (length: {len(payload['custom_instructions']) if payload['custom_instructions'] else 0})")
 
+        if "use_news" in payload:
+            account.use_news = "true" if payload["use_news"] else "false"
+            logger.info(f"Updated use_news to: {account.use_news}")
+
+        if "use_technical_analysis" in payload:
+            account.use_technical_analysis = "true" if payload["use_technical_analysis"] else "false"
+            logger.info(f"Updated use_technical_analysis to: {account.use_technical_analysis}")
+
         # Allow updating initial_capital and current_cash
         # WARNING: This will reset the account balance. Use with caution.
         if "initial_capital" in payload:
@@ -299,7 +313,9 @@ async def update_account_settings(account_id: int, payload: dict, db: Session = 
             "base_url": account.base_url,
             "api_key": account.api_key,
             "custom_instructions": account.custom_instructions,
-            "is_active": account.is_active == "true"
+            "is_active": account.is_active == "true",
+            "use_news": account.use_news == "true",
+            "use_technical_analysis": account.use_technical_analysis == "true"
         }
     except HTTPException:
         raise

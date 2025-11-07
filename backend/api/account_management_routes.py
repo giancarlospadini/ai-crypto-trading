@@ -59,7 +59,9 @@ async def list_user_accounts(session_token: str, db: Session = Depends(get_db)):
                 current_cash=float(account.current_cash),
                 frozen_cash=float(account.frozen_cash),
                 account_type=account.account_type,
-                is_active=account.is_active == "true"
+                is_active=account.is_active == "true",
+                use_news=account.use_news == "true",
+                use_technical_analysis=account.use_technical_analysis == "true"
             )
             for account in accounts
         ]
@@ -109,9 +111,11 @@ async def create_trading_account(
             current_cash=float(account.current_cash),
             frozen_cash=float(account.frozen_cash),
             account_type=account.account_type,
-            is_active=account.is_active == "true"
+            is_active=account.is_active == "true",
+            use_news=account.use_news == "true",
+            use_technical_analysis=account.use_technical_analysis == "true"
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -147,9 +151,11 @@ async def get_account_details(
             current_cash=float(account.current_cash),
             frozen_cash=float(account.frozen_cash),
             account_type=account.account_type,
-            is_active=account.is_active == "true"
+            is_active=account.is_active == "true",
+            use_news=account.use_news == "true",
+            use_technical_analysis=account.use_technical_analysis == "true"
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -188,9 +194,11 @@ async def update_trading_account(
             name=account_data.name,
             model=account_data.model,
             base_url=account_data.base_url,
-            api_key=account_data.api_key
+            api_key=account_data.api_key,
+            use_news=account_data.use_news,
+            use_technical_analysis=account_data.use_technical_analysis
         )
-        
+
         return AccountOut(
             id=updated_account.id,
             user_id=updated_account.user_id,
@@ -202,7 +210,9 @@ async def update_trading_account(
             current_cash=float(updated_account.current_cash),
             frozen_cash=float(updated_account.frozen_cash),
             account_type=updated_account.account_type,
-            is_active=updated_account.is_active == "true"
+            is_active=updated_account.is_active == "true",
+            use_news=updated_account.use_news == "true",
+            use_technical_analysis=updated_account.use_technical_analysis == "true"
         )
         
     except HTTPException:
@@ -260,9 +270,11 @@ async def get_or_create_default(
             current_cash=float(account.current_cash),
             frozen_cash=float(account.frozen_cash),
             account_type=account.account_type,
-            is_active=account.is_active == "true"
+            is_active=account.is_active == "true",
+            use_news=account.use_news == "true",
+            use_technical_analysis=account.use_technical_analysis == "true"
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:

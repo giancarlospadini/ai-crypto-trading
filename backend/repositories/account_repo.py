@@ -81,13 +81,15 @@ def update_account(
     name: str = None,
     model: str = None,
     base_url: str = None,
-    api_key: str = None
+    api_key: str = None,
+    use_news: bool = None,
+    use_technical_analysis: bool = None
 ) -> Optional[Account]:
     """Update account information"""
     account = db.query(Account).filter(Account.id == account_id).first()
     if not account:
         return None
-    
+
     if name is not None:
         account.name = name
     if model is not None:
@@ -96,7 +98,11 @@ def update_account(
         account.base_url = base_url
     if api_key is not None:
         account.api_key = api_key
-    
+    if use_news is not None:
+        account.use_news = "true" if use_news else "false"
+    if use_technical_analysis is not None:
+        account.use_technical_analysis = "true" if use_technical_analysis else "false"
+
     db.commit()
     db.refresh(account)
     return account

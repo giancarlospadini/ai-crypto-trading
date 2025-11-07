@@ -72,7 +72,7 @@ export default function AccountChat({ accountId }: AccountChatProps) {
         <input
           type="text"
           placeholder="es: A quanto penso possa salire XRP prima dell'emissione del ETF?"
-          className="flex-1 px-3 py-2 text-sm border rounded-md"
+          className="flex-1 px-3 py-2 text-sm border rounded-md bg-background text-foreground placeholder:text-muted-foreground"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => {

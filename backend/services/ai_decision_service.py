@@ -118,7 +118,6 @@ IMPORTANT - CUSTOM USER INSTRUCTIONS:
 
 Follow these instructions carefully when making your trading decision.
 """
-
         # Build the prompt dynamically based on enabled features
         prompt_parts = ["You are a cryptocurrency trading AI. Based on the following portfolio and market data, decide on a trading action.\n"]
 
@@ -168,7 +167,7 @@ Rules:
 - For "sell": symbol is what to sell, target_portion_of_balance is % of position to sell (0.0-1.0)
 - For "hold": no action taken
 - Keep target_portion_of_balance between 0.1 and 0.3 for risk management
-- Execute buy trades of at least $20
+- Execute buy trades of at least $20 because of fees
 - Only choose symbols you have data for"""
 
         headers = {

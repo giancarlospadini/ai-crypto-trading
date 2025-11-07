@@ -154,6 +154,8 @@ export interface TradingAccount {
   frozen_cash: number
   account_type: string  // "AI" or "MANUAL"
   is_active: boolean
+  use_news?: boolean
+  use_technical_analysis?: boolean
 }
 
 export interface TradingAccountCreate {
@@ -163,6 +165,8 @@ export interface TradingAccountCreate {
   api_key?: string
   initial_capital?: number
   account_type?: string
+  use_news?: boolean
+  use_technical_analysis?: boolean
 }
 
 export interface TradingAccountUpdate {
@@ -172,6 +176,8 @@ export interface TradingAccountUpdate {
   api_key?: string
   initial_capital?: number
   custom_instructions?: string
+  use_news?: boolean
+  use_technical_analysis?: boolean
 }
 
 
@@ -237,7 +243,9 @@ export async function createAccount(account: TradingAccountCreate): Promise<Trad
       base_url: account.base_url,
       api_key: account.api_key,
       account_type: account.account_type || 'AI',
-      initial_capital: account.initial_capital || 10000
+      initial_capital: account.initial_capital || 10000,
+      use_news: account.use_news ?? true,
+      use_technical_analysis: account.use_technical_analysis ?? true
     })
   })
   return response.json()
@@ -252,7 +260,9 @@ export async function updateAccount(accountId: number, account: TradingAccountUp
       base_url: account.base_url,
       api_key: account.api_key,
       initial_capital: account.initial_capital,
-      custom_instructions: account.custom_instructions
+      custom_instructions: account.custom_instructions,
+      use_news: account.use_news,
+      use_technical_analysis: account.use_technical_analysis
     })
   })
   return response.json()

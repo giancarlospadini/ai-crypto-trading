@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s 'http://127.0.0.1:5611/api/account/2' -X 'PUT' -H 'Content-Type: application/json' --data-raw '{\"\"\"\"name\"\"\"\":\"\"\"\"Groq with News no TA\"\"\"\",\"\"\"\"model\"\"\"\":\"\"\"\"llama-3.3-70b-versatile\"\"\"\",\"\"\"\"base_url\"\"\"\":\"\"\"\"https://api.groq.com/openai/v1\"\"\"\",\"\"\"\"api_key\"\"\"\":\"\"\"\"gsk_test\"\"\"\",\"\"\"\"initial_capital\"\"\"\":1000,\"\"\"\"custom_instructions\"\"\"\":\"\"\"\"\"\"\"\",\"\"\"\"use_news\"\"\"\":true,\"\"\"\"use_technical_analysis\"\"\"\":false}')",
+      "Bash(python:*)",
+      "Bash(curl -s 'http://127.0.0.1:5611/api/account/test-llm' -H 'Content-Type: application/json' --data-raw '{\"\"\"\"model\"\"\"\":\"\"\"\"llama-3.3-70b-versatile\"\"\"\",\"\"\"\"base_url\"\"\"\":\"\"\"\"https://api.groq.com/openai/v1\"\"\"\",\"\"\"\"api_key\"\"\"\":\"\"\"\"gsk_test\"\"\"\"}')"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

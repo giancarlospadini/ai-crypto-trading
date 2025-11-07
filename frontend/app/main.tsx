@@ -194,12 +194,12 @@ function App() {
     }
   }
 
-  // Auto-refresh page every 2 minutes
+  // Auto-refresh page every 1 hour
   useEffect(() => {
     const autoRefreshInterval = setInterval(() => {
       console.log('Auto-refreshing page...')
       window.location.reload()
-    }, 120000) // 2 minutes = 120,000 milliseconds
+    }, 3600000) // 1 hour = 3,600,000 milliseconds
 
     return () => clearInterval(autoRefreshInterval)
   }, [])
