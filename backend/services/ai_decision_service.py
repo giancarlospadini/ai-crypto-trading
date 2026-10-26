@@ -265,6 +265,9 @@ Rules:
             if text_content.startswith("{{") and text_content.endswith("}}"):
                 text_content = text_content[1:-1].strip()
 
+            # Remove leading = that some models add (e.g., ={{)
+            text_content = text_content.lstrip('=').strip()
+
             # Handle potential JSON parsing issues with escape sequences
             try:
                 decision = json.loads(text_content)

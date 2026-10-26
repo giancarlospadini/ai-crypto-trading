@@ -18,7 +18,7 @@ class HyperliquidClient:
         """Initialize CCXT Hyperliquid exchange"""
         try:
             self.exchange = ccxt.hyperliquid({
-                'sandbox': False,  # Set to True for testnet
+                'sandbox': True,  # Set to True for testnet
                 'enableRateLimit': True,
             })
             logger.info("Hyperliquid exchange initialized successfully")

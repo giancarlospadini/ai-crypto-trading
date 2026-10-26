@@ -532,19 +532,35 @@ async def delete_account(account_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/test-llm")
-async def test_llm_connection(payload: dict):
-    """Test LLM connection with provided credentials"""
+async def test_llm_connection(payload: dict, db: Session = Depends(get_db)):
+    """Test LLM connection with provided credentials or from saved account"""
     try:
         import requests
         import json
-        
-        model = payload.get("model", "gpt-3.5-turbo")
-        base_url = payload.get("base_url", "https://api.openai.com/v1")
-        api_key = payload.get("api_key", "")
-        
+
+        # Check if account_id is provided to use saved credentials
+        account_id = payload.get("account_id")
+        if account_id:
+            account = db.query(Account).filter(
+                Account.id == account_id,
+                Account.is_active == "true"
+            ).first()
+
+            if not account:
+                return {"success": False, "message": "Account not found"}
+
+            model = account.model or "gpt-3.5-turbo"
+            base_url = account.base_url or "https://api.openai.com/v1"
+            api_key = account.api_key or ""
+        else:
+            # Use provided credentials
+            model = payload.get("model", "gpt-3.5-turbo")
+            base_url = payload.get("base_url", "https://api.openai.com/v1")
+            api_key = payload.get("api_key", "")
+
         if not api_key:
             return {"success": False, "message": "API key is required"}
-        
+
         if not base_url:
             return {"success": False, "message": "Base URL is required"}
         

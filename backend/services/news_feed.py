@@ -26,10 +26,16 @@ def fetch_latest_news(max_chars: int = 4000) -> str:
     try:
         response = requests.get(NEWS_FEED_URL, timeout=10)
         if response.status_code != 200:
-            logger.warning("Failed to fetch news feed: status %s", response.status_code)
+            logger.debug("Failed to fetch news feed: status %s", response.status_code)
             return ""
 
-        root = ET.fromstring(response.content)
+        # Parse XML with error handling for malformed feeds
+        try:
+            root = ET.fromstring(response.content)
+        except ET.ParseError:
+            logger.debug("XML parsing failed for news feed, skipping")
+            return ""
+
         channel = root.find("channel")
         if channel is None:
             return ""

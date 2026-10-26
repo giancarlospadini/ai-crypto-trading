@@ -102,10 +102,6 @@ def place_ai_driven_crypto_order(max_ratio: float = 0.2) -> None:
                 # Get portfolio data for this account
                 portfolio = _get_portfolio_data(db, account)
                 
-                if portfolio['total_assets'] <= 0:
-                    logger.debug(f"Account {account.name} has non-positive total assets, skipping")
-                    continue
-
                 # Call AI for trading decision
                 decision = call_ai_for_decision(db, account, portfolio, prices)
                 if not decision or not isinstance(decision, dict):
@@ -230,11 +226,11 @@ def place_ai_driven_crypto_order(max_ratio: float = 0.2) -> None:
                 save_ai_decision(db, account, decision, portfolio, executed=executed, order_id=order.id)
 
             except Exception as account_err:
-                logger.error(f"AI-driven order placement failed for account {account.name}: {account_err}", exc_info=True)
+                logger.debug(f"AI-driven order placement failed for account {account.name}: {account_err}", exc_info=True)
                 # Continue with next account even if one fails
 
     except Exception as err:
-        logger.error(f"AI-driven order placement failed: {err}", exc_info=True)
+        logger.debug(f"AI-driven order placement failed: {err}", exc_info=True)
         db.rollback()
     finally:
         db.close()
